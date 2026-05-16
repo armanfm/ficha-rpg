@@ -41,25 +41,10 @@ body{background:var(--ink);font-family:'Crimson Text',serif;color:var(--tx);min-
 
 .cronicas-lista{display:flex;flex-direction:column;gap:10px;}
 .cronica-card{background:var(--surf);border:1px solid var(--br);border-radius:2px;overflow:hidden;}
-.cronica-head{display:flex;align-items:center;padding:12px 16px;background:var(--card);cursor:pointer;gap:10px;user-select:none;}
-.cronica-head:hover{background:var(--cardh);}
+.cronica-head{display:flex;align-items:center;padding:14px 16px;background:var(--card);gap:10px;}
 .cronica-nome{font-family:'Cinzel',serif;font-size:15px;color:var(--gd);flex:1;letter-spacing:1px;}
-.cronica-count{font-size:12px;color:var(--tx3);font-style:italic;}
-.cronica-body{display:none;padding:14px 16px;border-top:1px solid var(--br);}
-.cronica-body.aberta{display:block;}
+.cronica-data{font-size:12px;color:var(--tx3);font-style:italic;}
 
-.add-row{display:flex;gap:8px;margin-bottom:12px;}
-.url-input{flex:1;background:var(--card);border:1px solid var(--br2);border-radius:2px;padding:8px 12px;color:var(--tx);font-family:'Crimson Text',serif;font-size:13px;outline:none;}
-.url-input:focus{border-color:var(--gd2);}
-.add-btn{background:rgba(201,168,76,.15);border:1px solid var(--gd2);color:var(--gd);font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;padding:8px 14px;cursor:pointer;border-radius:2px;white-space:nowrap;}
-.add-btn:hover{background:rgba(201,168,76,.3);}
-
-.ficha-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--br);border-radius:2px;padding:8px 12px;margin-bottom:6px;}
-.ficha-item:last-child{margin-bottom:0;}
-.ficha-nome{flex:1;font-size:14px;color:var(--tx);}
-.ficha-url{font-size:11px;color:var(--tx3);font-style:italic;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rm-btn{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;}
-.rm-btn:hover{color:#f66;}
 .vazio{font-size:13px;color:var(--tx3);font-style:italic;text-align:center;padding:10px 0;}
 </style>
 </head>
@@ -96,9 +81,8 @@ const SB = supabase.createClient(
 );
 
 let USER = null;
-let DADOS = []; // [{cronica, fichas:[]}]
+let DADOS = [];
 
-// AUTH
 async function entrar(){
   await SB.auth.signInWithOAuth({provider:'google', options:{redirectTo:window.location.href}});
 }
@@ -117,26 +101,19 @@ SB.auth.onAuthStateChange(async(_,session)=>{
   }
 });
 
-// ERRO
 function erro(msg){
   const d=document.getElementById('erroDiv');
   d.textContent=msg; d.style.display='block';
   setTimeout(()=>d.style.display='none',6000);
 }
 
-// CARREGAR
 async function carregar(){
   const {data:cronicas,error:e}=await SB.from('cronicas').select('*').eq('mestre_id',USER.id).order('criado_em',{ascending:false});
   if(e){erro('Erro ao carregar: '+e.message+' ('+e.code+')');renderizar([]);return;}
-  DADOS=[];
-  for(const c of cronicas||[]){
-    const {data:fc}=await SB.from('ficha_cronica').select('*').eq('cronica_id',c.id);
-    DADOS.push({cronica:c,fichas:fc||[]});
-  }
+  DADOS=cronicas||[];
   renderizar(DADOS);
 }
 
-// CRIAR CRONICA
 async function criarCronica(){
   const nome=document.getElementById('nomeInput').value.trim();
   if(!nome) return;
@@ -146,73 +123,22 @@ async function criarCronica(){
   btn.disabled=false; btn.textContent='+ Criar Crônica';
   if(e){erro('Erro: '+e.message+' | code: '+e.code);return;}
   document.getElementById('nomeInput').value='';
-  DADOS.unshift({cronica:data,fichas:[]});
+  DADOS.unshift(data);
   renderizar(DADOS);
 }
 
-// ADICIONAR FICHA
-async function adicionarFicha(cid){
-  const inp=document.getElementById('inp_'+cid);
-  const url=inp.value.trim();
-  if(!url){alert('Cole o link da ficha');return;}
-  const nome=url.split('/').filter(Boolean).pop()||url;
-  const {data,error:e}=await SB.from('ficha_cronica').insert({
-    cronica_id:cid, ficha_url:url, ficha_nome:nome,
-    xp_disponivel:0, xp_gasto:0, status:'ativa'
-  }).select().single();
-  if(e){alert('Erro ao adicionar: '+e.message);return;}
-  inp.value='';
-  const item=DADOS.find(d=>d.cronica.id===cid);
-  if(item) item.fichas.push(data);
-  renderizar(DADOS);
-  // reabre o card
-  document.getElementById('body_'+cid).classList.add('aberta');
-}
-
-// REMOVER FICHA
-async function removerFicha(fid,cid){
-  if(!confirm('Remover esta ficha da crônica?')) return;
-  await SB.from('ficha_cronica').delete().eq('id',fid);
-  const item=DADOS.find(d=>d.cronica.id===cid);
-  if(item) item.fichas=item.fichas.filter(f=>f.id!==fid);
-  renderizar(DADOS);
-  document.getElementById('body_'+cid).classList.add('aberta');
-}
-
-// TOGGLE
-function toggle(cid){
-  document.getElementById('body_'+cid).classList.toggle('aberta');
-}
-
-// RENDERIZAR
 function renderizar(dados){
   const lista=document.getElementById('lista');
   if(!dados.length){lista.innerHTML='<div class="vazio">Nenhuma crônica. Crie uma acima.</div>';return;}
   lista.innerHTML='';
-  dados.forEach(({cronica:c,fichas})=>{
+  dados.forEach(c=>{
     const div=document.createElement('div');
     div.className='cronica-card';
-    const qtd=fichas.length;
-    const fichasHtml=qtd===0
-      ?'<div class="vazio">Nenhuma ficha adicionada ainda.</div>'
-      :fichas.map(f=>`
-        <div class="ficha-item">
-          <div class="ficha-nome">${f.ficha_nome||'Jogador'}</div>
-          <div class="ficha-url" title="${f.ficha_url||''}">${f.ficha_url||''}</div>
-          <button class="rm-btn" onclick="removerFicha('${f.id}','${c.id}')">✕</button>
-        </div>`).join('');
+    const data=c.criado_em?new Date(c.criado_em).toLocaleDateString('pt-BR'):'';
     div.innerHTML=`
-      <div class="cronica-head" onclick="toggle('${c.id}')">
+      <div class="cronica-head">
         <div class="cronica-nome">${c.nome}</div>
-        <div class="cronica-count">${qtd} ficha${qtd!==1?'s':''}</div>
-        <span style="color:var(--tx3);font-size:11px;">▶</span>
-      </div>
-      <div class="cronica-body" id="body_${c.id}">
-        <div class="add-row">
-          <input class="url-input" id="inp_${c.id}" placeholder="Cole aqui o link da ficha do jogador..." onkeydown="if(event.key==='Enter')adicionarFicha('${c.id}')"/>
-          <button class="add-btn" onclick="adicionarFicha('${c.id}')">+ Adicionar Ficha</button>
-        </div>
-        ${fichasHtml}
+        <div class="cronica-data">${data}</div>
       </div>`;
     lista.appendChild(div);
   });

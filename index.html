@@ -421,6 +421,12 @@ SB.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('app').style.display='flex';
     document.getElementById('userAvatar').src = USER.user_metadata?.avatar_url||'';
     document.getElementById('userName').textContent = USER.user_metadata?.full_name||USER.email;
+    await SB.from('usuarios').upsert({
+      id: USER.id,
+      nome: USER.user_metadata?.full_name||'',
+      email: USER.email,
+      avatar: USER.user_metadata?.avatar_url||''
+    }, {onConflict:'id'});
     await goHome();
     checkConviteURL();
   }
@@ -556,18 +562,24 @@ function renderCronicasJogador(vinculos){
 }
 
 async function novaFicha(){
+  const btn = document.querySelector('#minhasFichas')?.parentElement?.querySelector('.btn-add');
+  if(btn){ btn.textContent='...'; btn.disabled=true; }
   const {data,error} = await SB.from('fichas').insert({
     usuario_id:USER.id, nome_personagem:'Novo Personagem', dados:defaultDados()
   }).select().single();
-  if(!error) abrirFicha(data.id);
-  else alert('Erro: '+error.message);
+  if(btn){ btn.textContent='+ Nova'; btn.disabled=false; }
+  if(!error){ await loadHome(); abrirFicha(data.id); }
+  else alert('Erro ao criar ficha: '+error.message+' (code: '+error.code+')');
 }
 
 async function novaCronica(){
   const nome=prompt('Nome da crônica:');
   if(!nome) return;
+  const btn = document.querySelector('#minhasCronicas')?.parentElement?.querySelector('.btn-add');
+  if(btn){ btn.textContent='...'; btn.disabled=true; }
   const {error}=await SB.from('cronicas').insert({mestre_id:USER.id,nome});
-  if(error) alert('Erro: '+error.message);
+  if(btn){ btn.textContent='+ Nova'; btn.disabled=false; }
+  if(error) alert('Erro ao criar crônica: '+error.message+' (code: '+error.code+')');
   else loadHome();
 }
 

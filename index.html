@@ -501,18 +501,28 @@ async function goHome(){
 }
 
 async function loadHome(){
-  const {data:fichas} = await SB.from('fichas').select('*').eq('usuario_id',USER.id).order('atualizado_em',{ascending:false});
-  renderMinhasFichas(fichas||[]);
+  try{
+    const {data:fichas, error:e1} = await SB.from('fichas').select('*').eq('usuario_id',USER.id).order('atualizado_em',{ascending:false});
+    if(e1) console.error('fichas error:',e1);
+    renderMinhasFichas(fichas||[]);
 
-  const {data:cronicas} = await SB.from('cronicas').select('*').eq('mestre_id',USER.id).order('criado_em',{ascending:false});
-  renderMinhasCronicas(cronicas||[]);
+    const {data:cronicas, error:e2} = await SB.from('cronicas').select('*').eq('mestre_id',USER.id).order('criado_em',{ascending:false});
+    if(e2) console.error('cronicas error:',e2);
+    renderMinhasCronicas(cronicas||[]);
 
-  const ids=(fichas||[]).map(f=>f.id);
-  if(ids.length){
-    const {data:vinculos} = await SB.from('ficha_cronica').select('*, fichas(*), cronicas(*)').in('ficha_id',ids);
-    renderCronicasJogador(vinculos||[]);
-  } else {
-    renderCronicasJogador([]);
+    const ids=(fichas||[]).map(f=>f.id);
+    if(ids.length){
+      const {data:vinculos,error:e3} = await SB.from('ficha_cronica').select('*, fichas(*), cronicas(*)').in('ficha_id',ids);
+      if(e3) console.error('vinculos error:',e3);
+      renderCronicasJogador(vinculos||[]);
+    } else {
+      renderCronicasJogador([]);
+    }
+  } catch(err){
+    console.error('loadHome exception:',err);
+    document.getElementById('minhasFichas').innerHTML='<div class="hs-empty">Erro ao carregar. Veja o console (F12).</div>';
+    document.getElementById('minhasCronicas').innerHTML='<div class="hs-empty">Erro ao carregar.</div>';
+    document.getElementById('cronicasJogador').innerHTML='<div class="hs-empty">Erro ao carregar.</div>';
   }
 }
 
@@ -573,13 +583,10 @@ async function novaFicha(){
 }
 
 async function novaCronica(){
-  const nome=prompt('Nome da crônica:');
-  if(!nome) return;
-  const btn = document.querySelector('#minhasCronicas')?.parentElement?.querySelector('.btn-add');
-  if(btn){ btn.textContent='...'; btn.disabled=true; }
-  const {error}=await SB.from('cronicas').insert({mestre_id:USER.id,nome});
-  if(btn){ btn.textContent='+ Nova'; btn.disabled=false; }
-  if(error) alert('Erro ao criar crônica: '+error.message+' (code: '+error.code+')');
+  const nome = window.prompt('Nome da crônica:');
+  if(!nome||!nome.trim()) return;
+  const {data,error}=await SB.from('cronicas').insert({mestre_id:USER.id,nome:nome.trim()}).select().single();
+  if(error){ console.error('novaCronica error:',error); alert('Erro: '+error.message); }
   else loadHome();
 }
 

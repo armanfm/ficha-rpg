@@ -4,45 +4,234 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ficha RPG - Login</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
-:root{--blood:#8B0000;--blood2:#b22222;--ink:#0d0905;--surf:#161008;--card:#1e1510;--br:#3a2a1a;--br2:#5a3a20;--gd:#c9a84c;--gd2:#7a6030;--tx:#e8d9c0;--tx2:#8a7a65;--tx3:#5a4a35;--gr:#3a8a3e;}
-*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;background:var(--ink);color:var(--tx);font-family:'Crimson Text',serif}.login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:22px}.eyebrow{font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:var(--blood2);text-transform:uppercase}.title{font-family:'Cinzel',serif;font-size:34px;font-weight:700;color:var(--gd);letter-spacing:3px;text-align:center}.sub{font-size:16px;color:var(--tx2);font-style:italic;text-align:center}.google-btn{display:flex;align-items:center;gap:12px;background:#fff;color:#333;border:none;border-radius:4px;padding:12px 24px;font-size:15px;font-weight:500;cursor:pointer}.google-btn:hover{box-shadow:0 2px 10px rgba(0,0,0,.35)}.google-btn svg{width:20px;height:20px}.app{display:none;min-height:100vh}.top{background:var(--surf);border-bottom:2px solid var(--blood);padding:10px 18px;display:flex;align-items:center;gap:12px}.avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--blood);object-fit:cover}.user{font-family:'Cinzel',serif;color:var(--gd);letter-spacing:1px;flex:1}.btn{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;border-radius:2px;cursor:pointer;white-space:nowrap}.btn-add{background:rgba(139,0,0,.2);border:1px solid var(--blood);color:#f99;padding:6px 12px}.btn-add:hover{background:rgba(139,0,0,.4);color:#fff}.btn-sec{background:transparent;border:1px solid var(--br2);color:var(--tx2);padding:6px 12px}.btn-sec:hover{background:var(--card)}.wrap{padding:22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section{background:var(--surf);border:1px solid var(--br);border-radius:2px;overflow:hidden}.head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--card);border-bottom:1px solid var(--br)}.head span{font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gd2)}.body{padding:10px 14px}.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;background:var(--card);border:1px solid var(--br);border-radius:2px;margin-bottom:7px;cursor:pointer}.item:hover{border-color:var(--gd2)}.name{font-size:15px;color:var(--tx)}.meta{font-size:11px;color:var(--tx3);font-style:italic}.empty,.loading{font-size:13px;color:var(--tx3);font-style:italic;text-align:center;padding:18px 0}.token{display:flex;gap:8px;margin-top:10px}.token input{flex:1;background:var(--card);border:1px solid var(--br2);color:var(--tx);padding:8px 10px;font-family:'Crimson Text',serif}.status{color:var(--tx3);font-size:13px;margin-top:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}.top{flex-wrap:wrap}.user{min-width:100%}}
-</style>
-</head>
-<body>
-<div id="login" class="login">
-  <div class="eyebrow">Sistema de Fichas</div>
-  <div class="title">Ficha RPG</div>
-  <div class="sub">Entre, escolha uma ficha e abra a tela completa separada.</div>
-  <button class="google-btn" onclick="loginGoogle()">
-    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    Entrar com Google
-  </button>
-</div>
-<div id="app" class="app">
-  <div class="top"><img id="avatar" class="avatar" alt=""><div id="user" class="user">-</div><button class="btn btn-sec" onclick="refreshHome()">Atualizar</button><button class="btn btn-sec" onclick="logout()">Sair</button></div>
-  <div class="wrap"><div class="grid">
-    <section class="section"><div class="head"><span>Minhas Fichas</span><button class="btn btn-add" onclick="novaFicha()">+ Nova</button></div><div id="mySheets" class="body"><div class="loading">Carregando...</div></div></section>
-    <section class="section"><div class="head"><span>Acesso por token</span></div><div class="body"><div class="meta">Cole aqui o token enviado pelo jogador ou pelo mestre.</div><div class="token"><input id="tokenInput" placeholder="Token"><button class="btn btn-add" onclick="usarTokenMestre()">Mestre</button><button class="btn btn-sec" onclick="usarTokenEdicao()">Editar</button></div><div class="status" id="status"></div></div></section>
-  </div></div>
-</div>
 <script>
 const SUPABASE_URL = 'https://psaoxyuwzglkhtohiiuo.supabase.co';
-const SUPABASE_KEY='sb_publishable_xv2LRjqtzCkaGAtGK9XSeQ_kXuO61zx';
-const SB=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let USER=null;
-function fichaUrl(id){return 'ficha.html?id='+encodeURIComponent(id);}
-function setStatus(t){document.getElementById('status').textContent=t||'';}
-async function loginGoogle(){await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]}});}
-async function logout(){await SB.auth.signOut();USER=null;document.getElementById('app').style.display='none';document.getElementById('login').style.display='flex';}
-SB.auth.onAuthStateChange(async (_event,session)=>{if(session?.user){USER=session.user;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('user').textContent=USER.user_metadata?.name||USER.email||'Usuario';document.getElementById('avatar').src=USER.user_metadata?.avatar_url||'';await refreshHome();}else{document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}});
-async function refreshHome(){if(!USER)return;const box=document.getElementById('mySheets');box.innerHTML='<div class="loading">Carregando...</div>';const {data,error}=await SB.from('fichas').select('id,nome,status,xp_total,xp_gasto,atualizada_em,criada_em,jogador_id').order('atualizada_em',{ascending:false});if(error){box.innerHTML='<div class="empty">'+error.message+'</div>';return;}renderSheets(data||[]);}
-function renderSheets(list){const box=document.getElementById('mySheets');box.innerHTML='';if(!list.length){box.innerHTML='<div class="empty">Nenhuma ficha ainda.</div>';return;}list.forEach(f=>{const el=document.createElement('div');el.className='item';const xp=(f.xp_total||0)-(f.xp_gasto||0);el.innerHTML=`<div><div class="name">${f.nome||'Sem nome'}</div><div class="meta">${f.status||'rascunho'} - XP ${xp} - ${new Date(f.atualizada_em||f.criada_em).toLocaleDateString('pt-BR')}</div></div><button class="btn btn-sec">Abrir</button>`;el.onclick=()=>location.href=fichaUrl(f.id);box.appendChild(el);});}
-async function novaFicha(){setStatus('Criando ficha...');const {data,error}=await SB.rpc('criar_ficha',{p_nome:'Novo Personagem',p_dados:{}});if(error){setStatus(error.message);return;}location.href=fichaUrl(data.id);}
-async function usarTokenMestre(){const token=document.getElementById('tokenInput').value.trim();if(!token)return;setStatus('Validando token...');const {data,error}=await SB.rpc('aceitar_token_mestre',{p_token:token});if(error){setStatus(error.message);return;}location.href=fichaUrl(data.id);}
-async function usarTokenEdicao(){const token=document.getElementById('tokenInput').value.trim();if(!token)return;setStatus('Reabrindo ficha...');const {data,error}=await SB.rpc('reabrir_ficha_com_token',{p_token:token});if(error){setStatus(error.message);return;}location.href=fichaUrl(data.id);}
+const SUPABASE_KEY = 'SUA_PUBLIC_KEY_AQUI';
+
+const SB = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let USER = null;
+
+function fichaUrl(id) {
+  return 'ficha.html?id=' + encodeURIComponent(id);
+}
+
+function setStatus(t) {
+  document.getElementById('status').textContent = t || '';
+}
+
+async function loginGoogle() {
+  await SB.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'https://armanfm.github.io/ficha-rpg/'
+    }
+  });
+}
+
+async function logout() {
+  await SB.auth.signOut();
+
+  USER = null;
+
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login').style.display = 'flex';
+}
+
+SB.auth.onAuthStateChange(async (_event, session) => {
+
+  if (session?.user) {
+
+    USER = session.user;
+
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    document.getElementById('user').textContent =
+      USER.user_metadata?.name ||
+      USER.email ||
+      'Usuario';
+
+    document.getElementById('avatar').src =
+      USER.user_metadata?.avatar_url || '';
+
+    await refreshHome();
+
+  } else {
+
+    document.getElementById('login').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+
+  }
+
+});
+
+async function refreshHome() {
+
+  if (!USER) return;
+
+  const box = document.getElementById('mySheets');
+
+  box.innerHTML = '<div class="loading">Carregando...</div>';
+
+  const { data, error } = await SB
+    .from('fichas')
+    .select(`
+      id,
+      nome,
+      status,
+      xp_total,
+      xp_gasto,
+      atualizada_em,
+      criada_em,
+      jogador_id
+    `)
+    .order('atualizada_em', { ascending: false });
+
+  if (error) {
+
+    box.innerHTML =
+      '<div class="empty">' + error.message + '</div>';
+
+    return;
+  }
+
+  renderSheets(data || []);
+}
+
+function renderSheets(list) {
+
+  const box = document.getElementById('mySheets');
+
+  box.innerHTML = '';
+
+  if (!list.length) {
+
+    box.innerHTML =
+      '<div class="empty">Nenhuma ficha ainda.</div>';
+
+    return;
+  }
+
+  list.forEach(f => {
+
+    const el = document.createElement('div');
+
+    el.className = 'item';
+
+    const xp =
+      (f.xp_total || 0) -
+      (f.xp_gasto || 0);
+
+    el.innerHTML = `
+      <div>
+        <div class="name">
+          ${f.nome || 'Sem nome'}
+        </div>
+
+        <div class="meta">
+          ${f.status || 'rascunho'}
+          -
+          XP ${xp}
+          -
+          ${new Date(
+            f.atualizada_em || f.criada_em
+          ).toLocaleDateString('pt-BR')}
+        </div>
+      </div>
+
+      <button class="btn btn-sec">
+        Abrir
+      </button>
+    `;
+
+    el.onclick = () => {
+      location.href = fichaUrl(f.id);
+    };
+
+    box.appendChild(el);
+
+  });
+
+}
+
+async function novaFicha() {
+
+  setStatus('Criando ficha...');
+
+  const { data, error } = await SB.rpc(
+    'criar_ficha',
+    {
+      p_nome: 'Novo Personagem',
+      p_dados: {}
+    }
+  );
+
+  if (error) {
+
+    setStatus(error.message);
+
+    return;
+  }
+
+  location.href = fichaUrl(data.id);
+}
+
+async function usarTokenMestre() {
+
+  const token =
+    document.getElementById('tokenInput')
+    .value
+    .trim();
+
+  if (!token) return;
+
+  setStatus('Validando token...');
+
+  const { data, error } = await SB.rpc(
+    'aceitar_token_mestre',
+    {
+      p_token: token
+    }
+  );
+
+  if (error) {
+
+    setStatus(error.message);
+
+    return;
+  }
+
+  location.href = fichaUrl(data.id);
+}
+
+async function usarTokenEdicao() {
+
+  const token =
+    document.getElementById('tokenInput')
+    .value
+    .trim();
+
+  if (!token) return;
+
+  setStatus('Reabrindo ficha...');
+
+  const { data, error } = await SB.rpc(
+    'reabrir_ficha_com_token',
+    {
+      p_token: token
+    }
+  );
+
+  if (error) {
+
+    setStatus(error.message);
+
+    return;
+  }
+
+  location.href = fichaUrl(data.id);
+}
 </script>
 </body>
 </html>

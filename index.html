@@ -421,12 +421,13 @@ SB.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('app').style.display='flex';
     document.getElementById('userAvatar').src = USER.user_metadata?.avatar_url||'';
     document.getElementById('userName').textContent = USER.user_metadata?.full_name||USER.email;
-    await SB.from('usuarios').upsert({
+    // upsert nao bloqueante — erro aqui nao quebra nada
+    SB.from('usuarios').upsert({
       id: USER.id,
       nome: USER.user_metadata?.full_name||'',
       email: USER.email,
       avatar: USER.user_metadata?.avatar_url||''
-    }, {onConflict:'id'});
+    }, {onConflict:'id'}).then(({error})=>{ if(error) console.warn('usuarios upsert:',error.message); });
     await goHome();
     checkConviteURL();
   }
